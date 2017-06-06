@@ -4,6 +4,10 @@ module xi_global
   use OMP_LIB
 
 
+  ! FGSL
+  use FGSL
+
+
   ! Default
   implicit none
 
@@ -37,7 +41,17 @@ module xi_global
 
   ! File locations
   character(*), parameter :: infile = '/data4/paper/plaplant/beams/'&
-       'HERA_ijones.hdf5'
+       //'HERA_ijones.hdf5'
+
+
+!------------------------------------------------------------------------------!
+
+
+  ! Variables
+
+
+  ! FGSL
+  type(fgsl_error_handler_t) :: default_errh
 
 
 !------------------------------------------------------------------------------!
@@ -47,8 +61,8 @@ module xi_global
 
 
   ! Input
-  real(8), dimension(:,:,:,:), allocatable :: all_maps
-  real(8), dimension(:,:),     allocatable :: ii_maps
+  complex(8), dimension(:,:,:,:), allocatable :: all_maps
+  real(8),    dimension(:,:),     allocatable :: ii_maps
 
 
   ! Output

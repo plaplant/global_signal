@@ -27,17 +27,14 @@ contains
     ! Local variables
     character(100) :: obj_name
     integer(4)     :: error
-    integer(4), dimension(4) :: dims
 
 
     ! HDF5 variables
-    integer(HID_T) :: file_id,dset_id,dspace_id
-    integer(HID_T) :: attr_id,header_id,hp_id
-    integer(HSIZE_T), dimension(1) :: admins
-    integer(HSIZE_T) :: hint
+    integer(HID_T)  :: file_id,dset_id
+    integer(HID_T)  :: dtype_id
+    integer(SIZE_T) :: offset,o0
+    type(C_PTR)     :: f_ptr
 
-    type(C_PTR) :: f_ptr
-    
 
     ! Timing variables
     character(8) :: ts1,ts2
@@ -52,10 +49,16 @@ contains
     write(obj_name,'(a)') '/Data/MuellerMatrices'
     call h5dopen_f(file_id, obj_name, dset_id, error)
 
+    ! Make a "complex derived type"
+    offset = h5offsetof(c_loc(all_maps(1,1,1,1)), c_loc(all_maps(2,1,1,1)))
+    o0     = 0
+    call h5tcreate_f(H5T_COMPOUND_F, offset, dtype_id, error)
+    call h5tinsert_f(dtype_id, "r", o0, H5T_NATIVE_DOUBLE, error)
+    call h5tinsert_f(dtype_id, "i", offset/2, H5T_NATIVE_DOUBLE, error)
+
     ! read in data
-    dims  = (/ 2, 2, N_pix, N_freq /)
     f_ptr = c_loc(all_maps)
-    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, f_ptr, error)
+    call h5dread_f(dset_id, dtype_id, f_ptr, error)
 
     ! Close it down
     call h5dclose_f(dset_id, error)
@@ -91,11 +94,12 @@ contains
 
 
     ! Open file and write out
+    fn = 'xi_nu_fortran.txt'
     open(11,file=fn)
     write(11,'(a,a15,2a16)') '#','nu [MHz]','re(Xi)','im(Xi)'
     do i=1,N_freq
-       write(11,'(3es16.8)') dble(xi_nu(1,i)), dble(xi_nu(2,i)), &
-            dimag(xi_nu(3,i))
+       write(11,'(3es16.8)') dble(xi_nu(1,i)/1D6), dble(xi_nu(2,i)), &
+            dimag(xi_nu(2,i))
     enddo
     close(11)
 

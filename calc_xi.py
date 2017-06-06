@@ -10,6 +10,7 @@ from numba import jit
 from scipy.special import spherical_jn, sph_harm
 import datetime
 import os
+import sys
 
 datafile = '/data4/paper/zionos/polskysim/IonRIME/jones_save/HERA_NicCST/ijonesband_100-200mhz_nfreq201_nside128.npy'
 outfile = '/home/plaplant/global_signal/xi_nu.txt'
@@ -33,6 +34,7 @@ def compute_II_map(arr):
     return output
 
 
+@jit
 def calc_xi_nu(alm, nu, tauh, lmax):
     """
     Calculate xi(nu) for a particular frequency given spherical harmonic coefficients
@@ -58,19 +60,17 @@ def calc_xi_nu(alm, nu, tauh, lmax):
             idx = hp.sphtfunc.Alm.getidx(lmax, il, im)
             prefac = (1j)**(3 * il + 2 * im)
             ylm = sph_harm(im, il, 0., 0.)
+            if np.isnan(ylm):
+                ylm = 0
             a = alm[idx]
 
             # add to running total
-            if np.isnan(prefac) or np.isnan(a) or np.isnan(jl) or np.isnan(ylm):
-                continue
             xi += prefac * a * jl * ylm
             if im > 0:
                 # for negative m, we have:
                 #   a_{l, -m} = a_{l, m}^*
                 #   Y_l^{-m} = (-1)**m * (Y_l^m)^*
                 prefac *= (-1)**im
-                if np.isnan(prefac) or np.isnan(np.conj(a)) or np.isnan(np.conj(ylm)):
-                    continue
                 xi += prefac * np.conj(a) * jl * np.conj(ylm)
 
     return np.complex_(xi)
@@ -151,7 +151,7 @@ def main():
         # save the data
         print("Saving data...")
         output = np.empty((len(nu), 3))
-        output[:, 0] = nu
+        output[:, 0] = nu / 1e6
         output[:, 1] = np.real(xi_nu)
         output[:, 2] = np.imag(xi_nu)
         np.savetxt(outfile, output, header=' nu    xi(nu)')

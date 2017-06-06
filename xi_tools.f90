@@ -81,8 +81,8 @@ contains
 
 
     ! Subroutine arguments
-    real(8), dimension(:,:,:,:), intent(in)  :: input_map
-    real(8), dimension(:,:),     intent(out) :: output_map
+    complex(8), dimension(:,:,:,:), intent(in)  :: input_map
+    real(8),    dimension(:,:),     intent(out) :: output_map
 
 
     ! Local variables
@@ -172,16 +172,16 @@ contains
 
        ! Compute xi value
        x = 0
-       !$omp parallel do         &
-       !$omp default(shared)     &
-       !$omp private(il,im)      &
-       !$omp private(arg,jl,y,a) &
+       !$omp parallel do           &
+       !$omp default(shared)       &
+       !$omp private(il,im,prefac) &
+       !$omp private(arg,jl,y,a)   &
        !$omp reduction(+:x)
        do il=0,LMAX
           arg = 2*pi*TAUH*nu
           jl  = fgsl_sf_bessel_jsl(il, arg)
 
-          do im=0,LMAX
+          do im=0,il
              prefac = (0D0, 1D0)**(3*il + 2*im)
              y      = Ylm(il,im,0D0,0D0)
              a      = alm(1,il,im)
@@ -192,7 +192,7 @@ contains
                 ! a_{l, -m} = a_{l, m}^*
                 ! Y_l^{-m}  = (-1)**m * (Y_l^m)^*
                 prefac = prefac * (-1)**im
-                x      = x + conjg(a)*jl*conjg(y)
+                x      = x + prefac*conjg(a)*jl*conjg(y)
              endif
           enddo
        enddo
@@ -201,6 +201,9 @@ contains
        ! Save value
        xi(2,inu) = x
     enddo
+
+    ! Add overall normalization
+    xi(2,:) = xi(2,:)*sqrt(4*pi)
 
 
     tr2 = omp_get_wtime()
@@ -223,9 +226,12 @@ contains
     complex(8)             :: Ylm
 
     ! Local variables
-    real(8) :: x
-    x   = fgsl_sf_legendre_sphplm(l, abs(m), cos(theta))
-    Ylm = (-1)**m * x * exp((0D0,1D0)*abs(m)*phi)
+    real(8)    :: x
+    integer(4) :: am
+
+    am  = abs(m)
+    x   = fgsl_sf_legendre_sphplm(l, am, cos(theta))
+    Ylm = (-1)**m * x * exp((0D0,1D0)*am*phi)
     if (m < 0) then
        ! use symmetry to compute -m values
        Ylm = (-1)**m * conjg(Ylm)
