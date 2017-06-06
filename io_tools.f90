@@ -8,6 +8,10 @@ module io_tools
   use HDF5
 
 
+  ! Global
+  use xi_global
+
+
   ! Default
   implicit none
 
@@ -49,8 +53,9 @@ contains
     call h5dopen_f(file_id, obj_name, dset_id, error)
 
     ! read in data
-    dims = (/ 2, 2, N_pix, N_freq /)
-    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, all_maps, dims, error)
+    dims  = (/ 2, 2, N_pix, N_freq /)
+    f_ptr = c_loc(all_maps)
+    call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, f_ptr, error)
 
     ! Close it down
     call h5dclose_f(dset_id, error)
@@ -63,6 +68,43 @@ contains
     write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called read data'
     return
   end subroutine read_data
+
+
+!------------------------------------------------------------------------------!
+
+
+  subroutine write_xi
+    ! Default
+    implicit none
+
+
+    ! Local variables
+    character(100) :: fn
+    integer(4)     :: i
+
+
+    ! Timing variables
+    character(8) :: ts1,ts2
+    real(8)      :: tr1,tr2
+    call time(ts1)
+    tr1 = omp_get_wtime()
+
+
+    ! Open file and write out
+    open(11,file=fn)
+    write(11,'(a,a15,2a16)') '#','nu [MHz]','re(Xi)','im(Xi)'
+    do i=1,N_freq
+       write(11,'(3es16.8)') dble(xi_nu(1,i)), dble(xi_nu(2,i)), &
+            dimag(xi_nu(3,i))
+    enddo
+    close(11)
+
+
+    tr2 = omp_get_wtime()
+    call time(ts2)
+    write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called write xi'
+    return
+  end subroutine write_xi
 
 
 end module io_tools

@@ -30,6 +30,9 @@ module xi_global
 
   ! Data parameters
   integer(4), parameter :: N_freq = 201
+  real(8),    parameter :: nu_min = 100
+  real(8),    parameter :: d_nu   = 0.5
+  real(8),    parameter :: TAUH   = 50D-9
 
 
   ! File locations
@@ -41,6 +44,11 @@ module xi_global
 
 
   ! Arrays
+
+
+  ! Input
+  real(8), dimension(:,:,:,:), allocatable :: all_maps
+  real(8), dimension(:,:),     allocatable :: ii_maps
 
 
   ! Output
