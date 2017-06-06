@@ -32,11 +32,17 @@ endif
 calculate_xi.x: $(OBJ)
 	$(FC) $(FFLAGS) $(INC) $(OBJ) calculate_xi.f90 -o $@ $(LIB)
 
+tests.x: $(OBJ)
+	$(FC) $(FFLAGS) $(INC) $(OBJ) tests.f90 -o $@ $(LIB)
+
 %.o: %.f90
 	$(FC) $(FFLAGS) $(INC) -c $*.f90
 
 .PHONY: all
 all: calculate_xi.x
+
+.PHONY: test
+test: tests.x
 
 .PHONY: clean
 clean:

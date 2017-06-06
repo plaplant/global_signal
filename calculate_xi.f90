@@ -4,6 +4,10 @@ program main
   use OMP_LIB
 
 
+  ! FGSL
+  use FGSL
+
+
   ! Global
   use xi_global
 
@@ -13,9 +17,12 @@ program main
   use xi_tools
 
 
-  ! Do work
+  ! Initialize
   call OMP_SET_NUM_THREADS(Ncpu)
+  default_errh = fgsl_set_error_handler_off()
 
+
+  ! Do work
   call init_maps
   call read_data
   call calc_II_map(all_maps, ii_maps)
