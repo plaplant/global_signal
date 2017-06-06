@@ -16,9 +16,10 @@ program main
   ! Do work
   call OMP_SET_NUM_THREADS(Ncpu)
 
+  call init_maps
   call read_data
-  call calc_II_map
-  call compute_xi
+  call calc_II_map(all_maps, ii_maps)
+  call compute_xi(ii_maps, xi_nu)
   call write_xi
 
 
