@@ -183,7 +183,7 @@ contains
 
           do im=0,il
              prefac = (0D0, 1D0)**(3*il + 2*im)
-             y      = Ylm(il,im,0D0,0D0)
+             y      = Ylm(il,im,b_theta,b_phi)
              a      = alm(1,il,im)
 
              x = x + prefac*a*jl*y

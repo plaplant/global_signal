@@ -27,9 +27,11 @@ module xi_global
 
 
   ! HEALPix parameters
-  integer(4), parameter :: N_side = 128
-  integer(4), parameter :: LMAX   = 3*N_side - 1
-  integer(4), parameter :: N_pix  = 12*N_side**2
+  integer(4), parameter :: N_side  = 128
+  integer(4), parameter :: LMAX    = 3*N_side - 1
+  integer(4), parameter :: N_pix   = 12*N_side**2
+  real(8),    parameter :: b_theta = pi/2
+  real(8),    parameter :: b_phi   = 0
 
 
   ! Data parameters
