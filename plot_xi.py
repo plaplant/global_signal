@@ -16,29 +16,27 @@ def main():
     matplotlib.rc('lines', linewidth=3)
 
     # read in data
-    data_python = np.genfromtxt('xi_nu.txt')
-    data_fortran = np.genfromtxt('xi_nu_fortran.txt')
+    data1 = np.genfromtxt('Output/beam_default/b_zenith/xi_nu.txt')
+    data2 = np.genfromtxt('Output/beam_default/b_horizon/xi_nu.txt')
+    data3 = np.genfromtxt('Output/beam_default/b_horizon2/xi_nu.txt')
+    data4 = np.genfromtxt('Output/beam_default/b_horizon3/xi_nu.txt')
+    data5 = np.genfromtxt('Output/beam_zenith/b_zenith/xi_nu.txt')
+    data6 = np.genfromtxt('Output/beam_zenith/b_horizon/xi_nu.txt')
+    data7 = np.genfromtxt('Output/beam_zenith/b_horizon2/xi_nu.txt')
+    data8 = np.genfromtxt('Output/beam_zenith/b_horizon3/xi_nu.txt')
 
     # make figure
     fig = plt.figure()
     ax = plt.gca()
 
-    nu_p = data_python[:, 0]
-    xi_re_p = data_python[:, 1]
-    xi_im_p = data_python[:, 2]
-
-    nu_f = data_fortran[:, 0]
-    xi_re_f = data_fortran[:, 1]
-    xi_im_f = data_fortran[:, 2]
-    xi_abs_f = xi_re_f**2 + xi_im_f**2
-
-    # plot
-    # ax.plot(nu_p, xi_re_p, color='g', linestyle='-', alpha=0.5, label='python')
-    # ax.plot(nu_p, xi_im_p, color='g', linestyle='--', alpha=0.5)
-    ax.plot(nu_f, xi_re_f, color='b', linestyle='-',
-            alpha=0.5, label='real')
-    ax.plot(nu_f, xi_im_f, color='b', linestyle='--', alpha=0.5, label='imag')
-    # ax.plot(nu_f, xi_abs_f, color='b', linestyle='-', alpha=0.5, label='abs')
+    #add_data_to_plot(ax, data1, color='g', label='default zenith')
+    #add_data_to_plot(ax, data2, color='b', label='default horizon')
+    #add_data_to_plot(ax, data3, color='y', label='default horizon2')
+    #add_data_to_plot(ax, data4, color='g', label='default horizon3')
+    #add_data_to_plot(ax, data5, color='c', label='zenith zenith')
+    add_data_to_plot(ax, data6, color='m', label='zenith horizon')
+    add_data_to_plot(ax, data7, color='y', label='zenith horizon2')
+    add_data_to_plot(ax, data8, color='k', label='zenith horizon3')
 
     # labels
     ax.set_xlabel(r'$\nu$ [MHz]')
@@ -54,6 +52,17 @@ def main():
     print("Saving {}...".format(output))
     plt.savefig(output, bbox_inches='tight')
     plt.close(fig)
+
+    return
+
+
+def add_data_to_plot(ax, data, color='k', label=None):
+    x = data[:, 0]
+    re = data[:, 1]
+    im = data[:, 2]
+
+    ax.plot(x, re, color=color, linestyle='-', alpha=0.5, label=label)
+    ax.plot(x, im, color=color, linestyle='--', alpha=0.5)
 
     return
 

@@ -20,6 +20,7 @@ program main
   ! Initialize
   call OMP_SET_NUM_THREADS(Ncpu)
   default_errh = fgsl_set_error_handler_off()
+  call set_baseline
 
 
   ! Do work
