@@ -23,15 +23,27 @@ module xi_global
 
 
   ! Computation
-  integer(4), parameter :: Ncpu = 16
+  integer(4), parameter :: Ncpu = 12
 
 
   ! HEALPix parameters
   integer(4), parameter :: N_side  = 128
   integer(4), parameter :: LMAX    = 3*N_side - 1
   integer(4), parameter :: N_pix   = 12*N_side**2
-  real(8),    parameter :: b_theta = pi/2
-  real(8),    parameter :: b_phi   = 0
+
+
+  ! Baseline parameters
+  ! baseline_case = 1: zenith
+  ! baseline_case = 2: horizon
+  ! baseline_case = 3: horizon with non-zero phi
+  integer(4), parameter :: baseline_case = 3
+
+
+  ! Rotation angle values
+  logical, parameter :: rotate_maps = .true.
+  real(8), parameter :: r_psi       = 0D0
+  real(8), parameter :: r_theta     = -((90 + 30.72D0) * (pi/180D0))
+  real(8), parameter :: r_phi       = 0D0
 
 
   ! Data parameters
@@ -44,6 +56,7 @@ module xi_global
   ! File locations
   character(*), parameter :: infile = '/data4/paper/plaplant/beams/'&
        //'HERA_ijones.hdf5'
+  character(*), parameter :: outdir = 'Output/'
 
 
 !------------------------------------------------------------------------------!
@@ -54,6 +67,10 @@ module xi_global
 
   ! FGSL
   type(fgsl_error_handler_t) :: default_errh
+
+
+  ! Baseline
+  real(8) :: b_theta,b_phi
 
 
 !------------------------------------------------------------------------------!

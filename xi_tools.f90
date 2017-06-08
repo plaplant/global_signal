@@ -89,6 +89,11 @@ contains
     integer(4) :: i,j,ipix,inu
 
 
+    ! Local arrays
+    real(8),    dimension(N_pix)           :: mp
+    complex(8), dimension(1,0:LMAX,0:LMAX) :: alm
+
+
     ! Timing variables
     character(8) :: ts1,ts2
     real(8)      :: tr1,tr2
@@ -102,7 +107,8 @@ contains
     ! Compute entries for output map in parallel
     !$omp parallel do           &
     !$omp default(shared)       &
-    !$omp private(i,j,ipix,inu)
+    !$omp private(i,j,ipix,inu) &
+    !$omp private(mp,alm)
     do inu=1,N_freq
        do ipix=1,N_pix
           do j=1,2
@@ -112,8 +118,18 @@ contains
              enddo
           enddo
        enddo
+
+       if (rotate_maps) then
+          ! Also rotate map
+          mp = output_map(:,inu)
+          call map2alm(N_side,LMAX,LMAX,mp,alm)
+          call rotate_alm(LMAX,alm,r_psi,r_theta,r_phi)
+          call alm2map(N_side,LMAX,LMAX,alm,mp)
+          output_map(:,inu) = mp
+       endif
     enddo
     !$omp end parallel do
+
 
     tr2 = omp_get_wtime()
     call time(ts2)
@@ -211,6 +227,56 @@ contains
     write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called compute xi'
     return
   end subroutine compute_xi
+
+
+!------------------------------------------------------------------------------!
+
+
+  subroutine set_baseline
+    ! Default
+    implicit none
+
+
+    ! Timing variables
+    character(8) :: ts1,ts2
+    real(8)      :: tr1,tr2
+    call time(ts1)
+    tr1 = omp_get_wtime()
+
+
+    ! Set global variables based on input parameter
+    select case(baseline_case)
+    case(1)
+       ! Zenith-oriented baseline
+       b_theta = 0
+       b_phi   = 0
+    case(2)
+       ! Horizon-oriented baseline
+       b_theta = pi/2
+       b_phi   = 0
+    case(3)
+       ! Horizon-oriented, with non-zero phi
+       ! sanity check
+       b_theta = pi/2
+       b_phi   = pi/3
+    end select
+
+    ! Echo out choices
+    write(*,*) "Parameters:"
+    if (rotate_maps) then
+       write(*,'(a,3f8.3)') "Beam Rotation (psi, theta, psi): ",&
+            r_psi,r_theta,r_phi
+    else
+       write(*,*) "No beam rotation"
+    endif
+    write(*,'(a,2f8.3)') "Baselne orientation (theta, phi): ",b_theta,b_phi
+
+
+    tr2 = omp_get_wtime()
+    call time(ts2)
+    write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called set baseline'
+    return
+  end subroutine set_baseline
 
 
 !------------------------------------------------------------------------------!
