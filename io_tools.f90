@@ -84,7 +84,7 @@ contains
     ! Local variables
     character(100)  :: fn,rot_dir
     type(C_PTR)     :: f_ptr
-    integer(4)      :: i,j,error
+    integer(4)      :: error
     integer(HID_T)  :: file_id,dset_id
     integer(HID_T)  :: dspace_id,dtype_id
     integer(HID_T)  :: xi_id,attr_id,header_id
