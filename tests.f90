@@ -10,6 +10,7 @@ program main
 
   ! Tools
   use alm_tools
+  use fgsl
   use io_tools
   use xi_tools
 
@@ -19,10 +20,13 @@ program main
 
 
   ! Do work
-  call init_maps
-  call read_data
-  call calc_II_map(all_maps, ii_maps)
-  call test_data
+  if (.false.) then
+     call init_maps
+     call read_data
+     call calc_II_map(all_maps, ii_maps)
+     call test_data
+  endif
+  call test_special_functions
 
 
 contains
@@ -101,8 +105,40 @@ contains
     z = alm(1,i,j)
     write(*,'(a,i3,a,i3,a,2es16.8)') "alm(1,",i,",",j,"): ",z
 
-
   end subroutine test_data
+
+
+  subroutine test_special_functions
+    ! Default
+    implicit none
+
+    ! Local variables
+    integer(4) :: l,m
+    real(8)    :: jl,theta,phi,x
+    complex(8) :: y
+
+    ! Compare spherical harmonic values
+    l     = 3
+    m     = -2
+    theta = 0.2D0
+    phi   = 0.1D0
+    y     = Ylm(l,m,theta,phi)
+    write(*,'(a,i1,a,i1,a,f5.2,a,f5.2,a,2es16.8)') &
+         "Ylm(",l,",",m,",",theta,",",phi,"):     ",y
+    l     = 194
+    m     = -85
+    theta = 2.6D0
+    phi   = 4.9D0
+    y     = Ylm(l,m,theta,phi)
+    write(*,'(a,i3,a,i3,a,f5.2,a,f5.2,a,2es16.8)') &
+         "Ylm(",l,",",m,",",theta,",",phi,"): ",y
+    l  = 12
+    x  = 10.4
+    jl = fgsl_sf_bessel_jsl(l,x)
+    write(*,'(a,i2,a,f5.2,a,es16.8)') "jl(",l,",",x,"): ",jl
+
+
+  end subroutine test_special_functions
 
 
 end program main

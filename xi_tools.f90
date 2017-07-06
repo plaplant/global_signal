@@ -147,13 +147,13 @@ contains
 
 
     ! Subroutine arguments
-    real(8),    dimension(:,:), intent(in)  :: input_map
-    complex(8), dimension(:,:), intent(out) :: xi
+    real(8),    dimension(:,:),   intent(in)  :: input_map
+    complex(8), dimension(:,:,:), intent(out) :: xi
 
 
     ! Local variables
-    integer(4) :: inu,il,im
-    real(8)    :: arg,jl,nu
+    integer(4) :: inu,il,im,iphi
+    real(8)    :: arg,jl,nu,theta,phi
     complex(8) :: prefac,y,a,x
 
 
@@ -171,55 +171,63 @@ contains
 
     ! Initialize frequency array
     do inu=1,N_freq
-       xi(1,inu) = Nu_min + (inu-1)*d_nu
+       xi(1,inu,:) = Nu_min + (inu-1)*d_nu
     enddo
 
     ! Convert from MHz to Hz
     xi = xi*1D6
 
-    ! Loop over frequencies
-    do inu=1,N_freq
-       ! Get frequency in Hz
-       nu = xi(1,inu)
+    ! Loop over phi values
+    do iphi=1,N_phi
+       theta = b_theta
+       phi   = phi_min + (iphi-1)*d_phi
+       ! Loop over frequencies
+       do inu=1,N_freq
+          ! Get frequency in Hz
+          nu = dble(xi(1,inu,iphi))
 
-       ! Get healpix map and convert to a_lm
-       mp = input_map(:,inu)
-       call map2alm(N_side,LMAX,LMAX,mp,alm)
+          ! Get healpix map and convert to a_lm
+          mp = input_map(:,inu)
+          call map2alm(N_side,LMAX,LMAX,mp,alm)
 
-       ! Compute xi value
-       x = 0
-       !$omp parallel do           &
-       !$omp default(shared)       &
-       !$omp private(il,im,prefac) &
-       !$omp private(arg,jl,y,a)   &
-       !$omp reduction(+:x)
-       do il=0,LMAX
-          arg = 2*pi*TAUH*nu
-          jl  = fgsl_sf_bessel_jsl(il, arg)
+          ! Compute xi value
+          x = 0
+          !$omp parallel do           &
+          !$omp default(shared)       &
+          !$omp private(il,im,prefac) &
+          !$omp private(arg,jl,y,a)   &
+          !$omp reduction(+:x)
+          do il=0,LMAX
+             arg = 2*pi*TAUH*nu
+             jl  = fgsl_sf_bessel_jsl(il, arg)
 
-          do im=0,il
-             prefac = (0D0, 1D0)**(3*il + 2*im)
-             y      = Ylm(il,im,b_theta,b_phi)
-             a      = alm(1,il,im)
+             do im=0,il
+                prefac = (0D0, 1D0)**(3*il + 2*im)
+                y      = Ylm(il,im,theta,phi)
+                a      = alm(1,il,im)
 
-             x = x + prefac*a*jl*y
-             if (im > 0) then
-                ! for negative m, we have
-                ! a_{l, -m} = a_{l, m}^*
-                ! Y_l^{-m}  = (-1)**m * (Y_l^m)^*
-                prefac = prefac * (-1)**im
-                x      = x + prefac*conjg(a)*jl*conjg(y)
-             endif
+                x = x + prefac*a*jl*y
+                if (im > 0) then
+                   ! for negative m, we have
+                   ! a_{l, -m} = a_{l, m}^*
+                   ! Y_l^{-m}  = (-1)**m * (Y_l^m)^*
+                   prefac = prefac * (-1)**im
+                   x      = x + prefac*conjg(a)*jl*conjg(y)
+                endif
+             enddo
           enddo
-       enddo
-       !$omp end parallel do
+          !$omp end parallel do
 
-       ! Save value
-       xi(2,inu) = x
+          ! Save value
+          xi(2,inu,iphi) = x
+       enddo
+
+       ! Set imaginary part of xi to phi
+       xi(1,:,iphi) = xi(1,:,iphi) + (0D0,1D0)*phi
     enddo
 
     ! Add overall normalization
-    xi(2,:) = xi(2,:)*sqrt(4*pi)
+    xi(2,:,:) = xi(2,:,:)*sqrt(4*pi)
 
 
     tr2 = omp_get_wtime()
@@ -227,56 +235,6 @@ contains
     write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called compute xi'
     return
   end subroutine compute_xi
-
-
-!------------------------------------------------------------------------------!
-
-
-  subroutine set_baseline
-    ! Default
-    implicit none
-
-
-    ! Timing variables
-    character(8) :: ts1,ts2
-    real(8)      :: tr1,tr2
-    call time(ts1)
-    tr1 = omp_get_wtime()
-
-
-    ! Set global variables based on input parameter
-    select case(baseline_case)
-    case(1)
-       ! Zenith-oriented baseline
-       b_theta = 0
-       b_phi   = 0
-    case(2)
-       ! Horizon-oriented baseline
-       b_theta = pi/2
-       b_phi   = 0
-    case(3)
-       ! Horizon-oriented, with non-zero phi
-       ! sanity check
-       b_theta = pi/2
-       b_phi   = pi/3
-    end select
-
-    ! Echo out choices
-    write(*,*) "Parameters:"
-    if (rotate_maps) then
-       write(*,'(a,3f8.3)') "Beam Rotation (psi, theta, psi): ",&
-            r_psi,r_theta,r_phi
-    else
-       write(*,*) "No beam rotation"
-    endif
-    write(*,'(a,2f8.3)') "Baselne orientation (theta, phi): ",b_theta,b_phi
-
-
-    tr2 = omp_get_wtime()
-    call time(ts2)
-    write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called set baseline'
-    return
-  end subroutine set_baseline
 
 
 !------------------------------------------------------------------------------!

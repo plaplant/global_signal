@@ -82,8 +82,8 @@ contains
 
 
     ! Local variables
-    character(100) :: fn,rot_dir,b_dir,rot_comment,b_comment
-    integer(4)     :: i
+    character(100) :: fn,rot_dir
+    integer(4)     :: i,j
 
 
     ! Timing variables
@@ -96,32 +96,18 @@ contains
     ! Open file and write out
     if (rotate_maps) then
        rot_dir     = 'beam_zenith'
-       write(rot_comment,'(a,3f10.5)') &
-            "# beam rotation, Euler psi, theta, phi: ",r_psi,r_theta,r_phi
     else
        rot_dir = 'beam_default'
-       write(rot_comment,'(a)') "# no beam rotation"
     endif
 
-    select case(baseline_case)
-    case(1)
-       b_dir = 'b_zenith'
-    case(2)
-       b_dir = 'b_horizon'
-    case(3)
-       b_dir = 'b_horizon3'
-    end select
-    write(b_comment,'(a,2f8.5)') "# baseline vector, theta, phi: ",b_theta,b_phi
-
     ! Make filename
-    fn = outdir//trim(rot_dir)//'/'//trim(b_dir)//'/xi_nu.txt'
-    open(11,file=fn)
-    write(11,'(a)') rot_comment
-    write(11,'(a)') b_comment
-    write(11,'(a,a15,2a16)') '#','nu [MHz]','re(Xi)','im(Xi)'
-    do i=1,N_freq
-       write(11,'(3es16.8)') dble(xi_nu(1,i)/1D6), dble(xi_nu(2,i)), &
-            dimag(xi_nu(2,i))
+    fn = outdir//trim(rot_dir)//'/xi_nu.dat'
+    open(11,file=fn,form='binary')
+    do j=1,N_phi
+       do i=1,N_freq
+          write(11) dble(xi_nu(1,i,j)/1D6), dimag(xi_nu(1,i,j)), &
+                    dble(xi_nu(2,i,j)),     dimag(xi_nu(2,i,j))
+       enddo
     enddo
     close(11)
 

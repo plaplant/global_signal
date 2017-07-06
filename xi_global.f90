@@ -32,18 +32,19 @@ module xi_global
   integer(4), parameter :: N_pix   = 12*N_side**2
 
 
-  ! Baseline parameters
-  ! baseline_case = 1: zenith
-  ! baseline_case = 2: horizon
-  ! baseline_case = 3: horizon with non-zero phi
-  integer(4), parameter :: baseline_case = 3
-
-
   ! Rotation angle values
   logical, parameter :: rotate_maps = .true.
   real(8), parameter :: r_psi       = 0D0
   real(8), parameter :: r_theta     = -((90 + 30.72D0) * (pi/180D0))
   real(8), parameter :: r_phi       = 0D0
+
+
+  ! Baseline angle values
+  real(8),    parameter :: b_theta = pi/2
+  real(8),    parameter :: phi_min = 0
+  real(8),    parameter :: phi_max = 2*pi
+  real(8),    parameter :: d_phi   = pi/12
+  integer(4), parameter :: N_phi   = int((phi_max-phi_min)/d_phi)
 
 
   ! Data parameters
@@ -69,10 +70,6 @@ module xi_global
   type(fgsl_error_handler_t) :: default_errh
 
 
-  ! Baseline
-  real(8) :: b_theta,b_phi
-
-
 !------------------------------------------------------------------------------!
 
 
@@ -85,7 +82,7 @@ module xi_global
 
 
   ! Output
-  complex(8), dimension(2,N_freq) :: xi_nu
+  complex(8), dimension(2,N_freq,N_phi) :: xi_nu
 
 
 end module xi_global
