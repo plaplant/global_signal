@@ -147,8 +147,8 @@ contains
 
 
     ! Subroutine arguments
-    real(8),    dimension(:,:),   intent(in)  :: input_map
-    complex(8), dimension(:,:,:), intent(out) :: xi
+    real(8),    dimension(:,:), intent(in)  :: input_map
+    complex(8), dimension(:,:), intent(out) :: xi
 
 
     ! Local variables
@@ -171,20 +171,26 @@ contains
 
     ! Initialize frequency array
     do inu=1,N_freq
-       xi(1,inu,:) = Nu_min + (inu-1)*d_nu
+       nu_vals(inu) = Nu_min + (inu-1)*d_nu
     enddo
 
     ! Convert from MHz to Hz
-    xi = xi*1D6
+    nu_vals = nu_vals*1D6
 
     ! Loop over phi values
     do iphi=1,N_phi
        theta = b_theta
        phi   = phi_min + (iphi-1)*d_phi
+       phi_vals(iphi) = phi
+
+       ! Write out as a progress report
+       write(*,*) "theta, phi: ", theta, phi
+
        ! Loop over frequencies
        do inu=1,N_freq
           ! Get frequency in Hz
-          nu = dble(xi(1,inu,iphi))
+          nu  = nu_vals(inu)
+          arg = 2*pi*TAUH*nu
 
           ! Get healpix map and convert to a_lm
           mp = input_map(:,inu)
@@ -192,13 +198,12 @@ contains
 
           ! Compute xi value
           x = 0
-          !$omp parallel do           &
-          !$omp default(shared)       &
-          !$omp private(il,im,prefac) &
-          !$omp private(arg,jl,y,a)   &
+          !$omp parallel do         &
+          !$omp default(shared)     &
+          !$omp private(il,jl,im)   &
+          !$omp private(y,a,prefac) &
           !$omp reduction(+:x)
           do il=0,LMAX
-             arg = 2*pi*TAUH*nu
              jl  = fgsl_sf_bessel_jsl(il, arg)
 
              do im=0,il
@@ -219,15 +224,12 @@ contains
           !$omp end parallel do
 
           ! Save value
-          xi(2,inu,iphi) = x
+          xi(inu,iphi) = x
        enddo
-
-       ! Set imaginary part of xi to phi
-       xi(1,:,iphi) = xi(1,:,iphi) + (0D0,1D0)*phi
     enddo
 
     ! Add overall normalization
-    xi(2,:,:) = xi(2,:,:)*sqrt(4*pi)
+    xi = xi*sqrt(4*pi)
 
 
     tr2 = omp_get_wtime()

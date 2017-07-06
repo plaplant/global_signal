@@ -82,8 +82,15 @@ contains
 
 
     ! Local variables
-    character(100) :: fn,rot_dir
-    integer(4)     :: i,j
+    character(100)  :: fn,rot_dir
+    type(C_PTR)     :: f_ptr
+    integer(4)      :: i,j,error
+    integer(HID_T)  :: file_id,dset_id
+    integer(HID_T)  :: dspace_id,dtype_id
+    integer(HID_T)  :: xi_id,attr_id,header_id
+    integer(SIZE_T) :: hint,offset,o0
+    integer(HSIZE_T), dimension(1) :: adims
+    integer(HSIZE_T), dimension(2) :: ddims
 
 
     ! Timing variables
@@ -95,21 +102,110 @@ contains
 
     ! Open file and write out
     if (rotate_maps) then
-       rot_dir     = 'beam_zenith'
+       rot_dir = 'beam_zenith'
     else
        rot_dir = 'beam_default'
     endif
 
     ! Make filename
-    fn = outdir//trim(rot_dir)//'/xi_nu.dat'
-    open(11,file=fn,form='binary')
-    do j=1,N_phi
-       do i=1,N_freq
-          write(11) dble(xi_nu(1,i,j)/1D6), dimag(xi_nu(1,i,j)), &
-                    dble(xi_nu(2,i,j)),     dimag(xi_nu(2,i,j))
-       enddo
-    enddo
-    close(11)
+    fn = outdir//trim(rot_dir)//'/xi_nu_phi.hdf5'
+
+    write(*,*) "Writing ",trim(fn)
+
+    call h5open_f(error)
+    call h5fcreate_f(trim(fn), H5F_ACC_TRUNC_F, file_id, error)
+
+    ! Create header
+    hint = 0
+    call h5gcreate_f(file_id, "/Header", header_id, error, size_hint=hint)
+
+    ! Write attributes
+    adims = (/ 1 /)
+
+    ! Baseline theta value
+    call h5screate_f(H5S_SCALAR_F, dset_id, error)
+    call h5acreate_f(header_id, "b_theta", H5T_NATIVE_DOUBLE, dset_id, &
+         attr_id, error)
+    call h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, b_theta, adims, error)
+    call h5aclose_f(attr_id, error)
+    call h5sclose_f(dset_id, error)
+
+    ! Frequency information
+    call h5screate_f(H5S_SCALAR_F, dset_id, error)
+    call h5acreate_f(header_id, "N_freq", H5T_NATIVE_INTEGER, dset_id, &
+         attr_id, error)
+    f_ptr = c_loc(N_freq)
+    call h5awrite_f(attr_id, H5T_NATIVE_INTEGER, f_ptr, error)
+    call h5aclose_f(attr_id, error)
+    call h5sclose_f(dset_id, error)
+
+    call h5screate_f(H5S_SCALAR_F, dset_id, error)
+    call h5acreate_f(header_id, "nu_min", H5T_NATIVE_DOUBLE, dset_id, &
+         attr_id, error)
+    call h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, nu_min, adims, error)
+    call h5aclose_f(attr_id, error)
+    call h5sclose_f(dset_id, error)
+
+    call h5screate_f(H5S_SCALAR_F, dset_id, error)
+    call h5acreate_f(header_id, "d_nu", H5T_NATIVE_DOUBLE, dset_id, &
+         attr_id, error)
+    call h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, d_nu, adims, error)
+    call h5aclose_f(attr_id, error)
+    call h5sclose_f(dset_id, error)
+
+    ! delay value
+    call h5screate_f(H5S_SCALAR_F, dset_id, error)
+    call h5acreate_f(header_id, "tau_h", H5T_NATIVE_DOUBLE, dset_id, &
+         attr_id, error)
+    call h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, TAUH, adims, error)
+    call h5aclose_f(attr_id, error)
+    call h5sclose_f(dset_id, error)
+
+
+    ! Write dataset
+    call h5gcreate_f(file_id, "/Data", xi_id, error, size_hint=hint)
+
+    ! Write out phi values
+    adims = (/ N_phi /)
+    call h5screate_simple_f(1, adims, dspace_id, error)
+    call h5dcreate_f(xi_id, "phi", H5T_NATIVE_DOUBLE, dspace_id, dset_id, &
+         error)
+    call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, phi_vals, adims, error)
+    call h5dclose_f(dset_id, error)
+    call h5sclose_f(dspace_id, error)
+
+    ! Write out frequencies
+    adims = (/ N_freq /)
+    call h5screate_simple_f(1, adims, dspace_id, error)
+    call h5dcreate_f(xi_id, "nu", H5T_NATIVE_DOUBLE, dspace_id, dset_id, &
+         error)
+    call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, nu_vals/1D6, adims, error)
+    call h5dclose_f(dset_id, error)
+    call h5sclose_f(dspace_id, error)
+
+    ! Make custom complex type
+    offset = h5offsetof(c_loc(xi_nu(1,1)), c_loc(xi_nu(2,1)))
+    o0 = 0
+    call h5tcreate_f(H5T_COMPOUND_F, offset, dtype_id, error)
+    call h5tinsert_f(dtype_id, "r", o0, H5T_NATIVE_DOUBLE, error)
+    call h5tinsert_f(dtype_id, "i", offset/2, H5T_NATIVE_DOUBLE, error)
+
+    ! Write out the data
+    ddims = (/ N_freq, N_phi /)
+    call h5screate_simple_f(2, ddims, dspace_id, error)
+    call h5dcreate_f(xi_id, "xi", dtype_id, dspace_id, dset_id, error)
+    f_ptr = c_loc(xi_nu)
+    call h5dwrite_f(dset_id, dtype_id, f_ptr, error)
+    call h5tclose_f(dtype_id, error)
+    call h5dclose_f(dset_id, error)
+    call h5sclose_f(dspace_id, error)
+
+
+    ! Close it down
+    call h5gclose_f(xi_id, error)
+    call h5gclose_f(header_id, error)
+    call h5fclose_f(file_id, error)
+    call h5close_f(error)
 
 
     tr2 = omp_get_wtime()

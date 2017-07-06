@@ -23,7 +23,7 @@ module xi_global
 
 
   ! Computation
-  integer(4), parameter :: Ncpu = 12
+  integer(4), parameter :: Ncpu = 8
 
 
   ! HEALPix parameters
@@ -82,7 +82,9 @@ module xi_global
 
 
   ! Output
-  complex(8), dimension(2,N_freq,N_phi) :: xi_nu
+  real(8),    dimension(N_phi)        :: phi_vals
+  real(8),    dimension(N_freq)       :: nu_vals
+  complex(8), dimension(N_freq,N_phi) :: xi_nu
 
 
 end module xi_global
