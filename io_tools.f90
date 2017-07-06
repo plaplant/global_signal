@@ -88,7 +88,7 @@ contains
     integer(HID_T)  :: file_id,dset_id
     integer(HID_T)  :: dspace_id,dtype_id
     integer(HID_T)  :: xi_id,attr_id,header_id
-    integer(SIZE_T) :: hint,offset,o0
+    integer(SIZE_T) :: hint,offset,c_size
     integer(HSIZE_T), dimension(1) :: adims
     integer(HSIZE_T), dimension(2) :: ddims
 
@@ -163,6 +163,7 @@ contains
 
 
     ! Write dataset
+    hint = 0
     call h5gcreate_f(file_id, "/Data", xi_id, error, size_hint=hint)
 
     ! Write out phi values
@@ -179,16 +180,17 @@ contains
     call h5screate_simple_f(1, adims, dspace_id, error)
     call h5dcreate_f(xi_id, "nu", H5T_NATIVE_DOUBLE, dspace_id, dset_id, &
          error)
-    call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, nu_vals/1D6, adims, error)
+    call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, nu_vals, adims, error)
     call h5dclose_f(dset_id, error)
     call h5sclose_f(dspace_id, error)
 
     ! Make custom complex type
-    offset = h5offsetof(c_loc(xi_nu(1,1)), c_loc(xi_nu(2,1)))
-    o0 = 0
-    call h5tcreate_f(H5T_COMPOUND_F, offset, dtype_id, error)
-    call h5tinsert_f(dtype_id, "r", o0, H5T_NATIVE_DOUBLE, error)
-    call h5tinsert_f(dtype_id, "i", offset/2, H5T_NATIVE_DOUBLE, error)
+    c_size = h5offsetof(c_loc(xi_nu(1,1)), c_loc(xi_nu(2,1)))
+    offset = 0
+    call h5tcreate_f(H5T_COMPOUND_F, c_size, dtype_id, error)
+    call h5tinsert_f(dtype_id, "r", offset, H5T_NATIVE_DOUBLE, error)
+    offset = offset + c_size/2
+    call h5tinsert_f(dtype_id, "i", offset, H5T_NATIVE_DOUBLE, error)
 
     ! Write out the data
     ddims = (/ N_freq, N_phi /)

@@ -231,6 +231,9 @@ contains
     ! Add overall normalization
     xi = xi*sqrt(4*pi)
 
+    ! Convert frequencies back to MHz
+    nu_vals = nu_vals/1D6
+
 
     tr2 = omp_get_wtime()
     call time(ts2)

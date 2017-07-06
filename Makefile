@@ -1,4 +1,4 @@
-FC      = /home/plaplant/local/hdf5-1.8.17/bin/h5fc
+FC      = /home/plaplant/local/hdf5-1.10.1/bin/h5fc
 FFLAGS  = -O3 -openmp -g -traceback -mcmodel=medium -shared-intel
 DBFLAGS = -check -warn -debug
 
@@ -13,7 +13,7 @@ CFITSIO     = $(HOME)/local/cfitsio-3.390
 CFITSIO_INC = -I$(CFITSIO)/include
 CFITSIO_LIB = -L$(CFITSIO)/lib -lcfitsio
 
-HDF5 = $(HOME)/local/hdf5-1.8.17
+HDF5 = $(HOME)/local/hdf5-1.10.1
 HDF5_INC = -I$(HDF5)/include
 HDF5_LIB = -L$(HDF5)/lib -lhdf5 -lhdf5_hl
 
