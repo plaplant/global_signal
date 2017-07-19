@@ -38,7 +38,7 @@ contains
 
     ! Allocate
     allocate(all_maps(2,2,N_pix,N_freq))
-    allocate(ii_maps(N_pix,N_freq))
+    allocate(mueller_maps(N_pix,N_freq,4,4))
 
     ! First touch in parallel
     !$omp parallel         &
@@ -56,9 +56,13 @@ contains
     enddo
     !$omp end do
     !$omp do
-    do j=1,N_freq
-       do i=1,N_pix
-          ii_maps(i,j) = 0
+    do l=1,4
+       do k=1,4
+          do j=1,N_freq
+             do i=1,N_pix
+                mueller_maps(i,j,k,l) = 0
+             enddo
+          enddo
        enddo
     enddo
     !$omp end do
@@ -75,14 +79,14 @@ contains
 !------------------------------------------------------------------------------!
 
 
-  subroutine calc_II_map(input_map, output_map)
+  subroutine calc_mueller_maps(input_map, output_map)
     ! Default
     implicit none
 
 
     ! Subroutine arguments
     complex(8), dimension(:,:,:,:), intent(in)  :: input_map
-    real(8),    dimension(:,:),     intent(out) :: output_map
+    real(8),    dimension(:,:,:,:), intent(out) :: output_map
 
 
     ! Local variables
@@ -91,6 +95,7 @@ contains
 
     ! Local arrays
     real(8),    dimension(N_pix)           :: mp
+    complex(8), dimension(2,2)             :: Pi,Pj,J_j
     complex(8), dimension(1,0:LMAX,0:LMAX) :: alm
 
 
@@ -104,56 +109,109 @@ contains
     ! Initialize output array
     output_map = 0
 
-    ! Compute entries for output map in parallel
-    !$omp parallel do           &
-    !$omp default(shared)       &
-    !$omp private(i,j,ipix,inu) &
-    !$omp private(mp,alm)
-    do inu=1,N_freq
-       do ipix=1,N_pix
-          do j=1,2
-             do i=1,2
-                output_map(ipix,inu) = output_map(ipix,inu) &
-                     + abs(input_map(i,j,ipix,inu))**2
+    ! Compute Mueller matrix entries
+    do j=1,4
+       Pj = stokes_matrix(j)
+       do i=1,4
+          Pi = stokes_matrix(i)
+          ! Parallelize over frequency
+          !$omp parallel do           &
+          !$omp default(shared)       &
+          !$omp private(ipix,inu,J_j) &
+          !$omp private(mp,alm)
+          do inu=1,N_freq
+             do ipix=1,N_pix
+                J_j = input_map(:,:,ipix,inu)
+                ! Equivalent to numpy np.einsum('ab,bc,cd,ad',Pi,J,Pj,J.conj())
+                ! Also need to take real part and divide by 2
+                output_map(ipix,inu,i,j) = &
+                     dble(sum(matmul(matmul(Pi,J_j),Pj)*conjg(J_j)))/2
              enddo
-          enddo
-       enddo
 
-       if (rotate_maps) then
-          ! Also rotate map
-          mp = output_map(:,inu)
-          call map2alm(N_side,LMAX,LMAX,mp,alm)
-          call rotate_alm(LMAX,alm,r_psi,r_theta,r_phi)
-          call alm2map(N_side,LMAX,LMAX,alm,mp)
-          output_map(:,inu) = mp
-       endif
+             if (rotate_maps) then
+                ! Also rotate map
+                mp = output_map(:,inu,i,j)
+                call map2alm(N_side,LMAX,LMAX,mp,alm)
+                call rotate_alm(LMAX,alm,r_psi,r_theta,r_phi)
+                call alm2map(N_side,LMAX,LMAX,alm,mp)
+                output_map(:,inu,i,j) = mp
+             endif
+          enddo
+          !$omp end parallel do
+       enddo
     enddo
-    !$omp end parallel do
 
 
     tr2 = omp_get_wtime()
     call time(ts2)
     write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called calc II map'
     return
-  end subroutine calc_II_map
+
+
+  contains
+
+
+    pure function stokes_matrix(i)
+      ! Default
+      implicit none
+
+      ! Function arguments
+      integer(4), intent(in)     :: i
+      complex(8), dimension(2,2) :: stokes_matrix
+
+      select case(i)
+      case(1)
+         ! Stokes I
+         stokes_matrix(1,1) = (1D0, 0D0)
+         stokes_matrix(2,1) = (0D0, 0D0)
+         stokes_matrix(1,2) = (0D0, 0D0)
+         stokes_matrix(2,2) = (1D0, 0D0)
+      case(2)
+         ! Stokes Q
+         stokes_matrix(1,1) = ( 1D0, 0D0)
+         stokes_matrix(2,1) = ( 0D0, 0D0)
+         stokes_matrix(1,2) = ( 0D0, 0D0)
+         stokes_matrix(2,2) = (-1D0, 0D0)
+      case(3)
+         ! Stokes U
+         stokes_matrix(1,1) = (0D0, 0D0)
+         stokes_matrix(2,1) = (1D0, 0D0)
+         stokes_matrix(1,2) = (1D0, 0D0)
+         stokes_matrix(2,2) = (0D0, 0D0)
+      case(4)
+         ! Stokes V
+         stokes_matrix(1,1) = (0D0,  0D0)
+         stokes_matrix(2,1) = (0D0,  1D0)
+         stokes_matrix(1,2) = (0D0, -1D0)
+         stokes_matrix(2,2) = (0D0,  0D0)
+      case default
+         ! Garbage
+         stokes_matrix = -1
+      end select
+
+      return
+    end function stokes_matrix
+
+
+  end subroutine calc_mueller_maps
 
 
 !------------------------------------------------------------------------------!
 
 
-  subroutine compute_xi(input_map,xi)
+  subroutine compute_xi(input_maps,xi)
     ! Default
     implicit none
 
 
     ! Subroutine arguments
-    real(8),    dimension(:,:), intent(in)  :: input_map
-    complex(8), dimension(:,:), intent(out) :: xi
+    real(8),    dimension(:,:,:,:), intent(in)  :: input_maps
+    complex(8), dimension(:,:,:,:), intent(out) :: xi
 
 
     ! Local variables
-    integer(4) :: inu,il,im,iphi
-    real(8)    :: arg,jl,nu,theta,phi
+    integer(4) :: inu,il,im,iphi,itau,ibl,istokes
+    real(8)    :: arg,jl,nu,theta,phi,tauh
     complex(8) :: prefac,y,a,x
 
 
@@ -177,54 +235,75 @@ contains
     ! Convert from MHz to Hz
     nu_vals = nu_vals*1D6
 
-    ! Loop over phi values
+    ! Initialize tauh array
+    do itau=1,N_bl
+       tauh_vals(itau) = r_bl(itau)/c_mks
+    enddo
+
+    ! Initialize phi_vals array
     do iphi=1,N_phi
-       theta = b_theta
-       phi   = phi_min + (iphi-1)*d_phi
-       phi_vals(iphi) = phi
+       phi_vals(iphi) = phi_min + (iphi-1)*d_phi
+    enddo
 
-       ! Write out as a progress report
-       write(*,*) "theta, phi: ", theta, phi
+    ! Loop over Stokes parameters
+    do istokes=1,4
+       ! Progress report
+       write(*,*) "Stokes ",istokes
 
-       ! Loop over frequencies
+       ! Loop over frequency to get alm's of Stokes map
        do inu=1,N_freq
           ! Get frequency in Hz
           nu  = nu_vals(inu)
-          arg = 2*pi*TAUH*nu
 
           ! Get healpix map and convert to a_lm
-          mp = input_map(:,inu)
+          ! We assume leakage is dominant over intrinsic polarization signal,
+          !   e.g., I -> Q' >> Q -> Q'
+          mp = input_maps(:,inu,istokes,1)
           call map2alm(N_side,LMAX,LMAX,mp,alm)
 
-          ! Compute xi value
-          x = 0
-          !$omp parallel do         &
-          !$omp default(shared)     &
-          !$omp private(il,jl,im)   &
-          !$omp private(y,a,prefac) &
-          !$omp reduction(+:x)
-          do il=0,LMAX
-             jl  = fgsl_sf_bessel_jsl(il, arg)
+          ! Loop over phi values
+          do iphi=1,N_phi
+             theta = b_theta
+             phi   = phi_vals(iphi)
 
-             do im=0,il
-                prefac = (0D0, 1D0)**(3*il + 2*im)
-                y      = Ylm(il,im,theta,phi)
-                a      = alm(1,il,im)
+             ! Loop over baseline values
+             do itau=1,N_bl
+                ! Get tauh in s
+                tauh = tauh_vals(itau)
 
-                x = x + prefac*a*jl*y
-                if (im > 0) then
-                   ! for negative m, we have
-                   ! a_{l, -m} = a_{l, m}^*
-                   ! Y_l^{-m}  = (-1)**m * (Y_l^m)^*
-                   prefac = prefac * (-1)**im
-                   x      = x + prefac*conjg(a)*jl*conjg(y)
-                endif
+                ! Compute argument of spherical Bessel function
+                arg  = 2*pi*tauh*nu
+
+                ! Compute xi value
+                x = 0
+                !$omp parallel do         &
+                !$omp default(shared)     &
+                !$omp private(il,jl,im)   &
+                !$omp private(y,a,prefac) &
+                !$omp reduction(+:x)
+                do il=0,LMAX
+                   jl  = fgsl_sf_bessel_jsl(il, arg)
+
+                   do im=0,il
+                      prefac = (0D0, 1D0)**(3*il + 2*im)
+                      y      = Ylm(il,im,theta,phi)
+                      a      = alm(1,il,im)
+
+                      x = x + prefac*a*jl*y
+                      if (im > 0) then
+                         ! for negative m, we have
+                         ! a_{l, -m} = (-1)**m * a_{l, m}^*
+                         ! Y_l^{-m}  = (-1)**m * (Y_l^m)^*
+                         x = x + prefac*conjg(a)*jl*conjg(y)
+                      endif
+                   enddo
+                enddo
+                !$omp end parallel do
+
+                ! Save value
+                xi(inu,iphi,istokes,itau) = x
              enddo
           enddo
-          !$omp end parallel do
-
-          ! Save value
-          xi(inu,iphi) = x
        enddo
     enddo
 

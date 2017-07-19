@@ -25,8 +25,8 @@ program main
   ! Do work
   call init_maps
   call read_data
-  call calc_II_map(all_maps, ii_maps)
-  call compute_xi(ii_maps, xi_nu)
+  call calc_mueller_maps(all_maps, mueller_maps)
+  call compute_xi(mueller_maps, xi_nu)
   call write_xi
 
 

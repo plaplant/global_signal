@@ -20,6 +20,8 @@ module xi_global
 
   ! Physical constants
   real(8), parameter :: pi = acos(-1D0)
+  real(8), parameter :: c_cgs = 2.99792458D10
+  real(8), parameter :: c_mks = c_cgs/1D2
 
 
   ! Computation
@@ -51,13 +53,14 @@ module xi_global
   integer(4), parameter :: N_freq = 201
   real(8),    parameter :: nu_min = 100
   real(8),    parameter :: d_nu   = 0.5
-  real(8),    parameter :: TAUH   = 50D-9
+  integer(4), parameter :: N_bl   = 8
+  real(8),    parameter, dimension(N_bl) :: r_bl = (/ 14.6D0, 25.3D0, 29.2D0, &
+       38.6D0, 43.8D0, 50.6D0, 52.6D0, 58.4D0 /)
 
 
   ! File locations
   character(*), parameter :: infile = '/data4/paper/plaplant/beams/'&
-       !//'HERA_ijones.hdf5'
-       //'PAPER_ijones.hdf5'
+       //'HERA_ijones.hdf5'
   character(*), parameter :: outdir = 'Output/PAPER/'
 
 
@@ -79,13 +82,14 @@ module xi_global
 
   ! Input
   complex(8), dimension(:,:,:,:), allocatable :: all_maps
-  real(8),    dimension(:,:),     allocatable :: ii_maps
+  real(8),    dimension(:,:,:,:), allocatable :: mueller_maps
 
 
   ! Output
-  real(8),    dimension(N_phi)        :: phi_vals
-  real(8),    dimension(N_freq)       :: nu_vals
-  complex(8), dimension(N_freq,N_phi) :: xi_nu
+  real(8),    dimension(N_phi)               :: phi_vals
+  real(8),    dimension(N_freq)              :: nu_vals
+  real(8),    dimension(N_bl)                :: tauh_vals
+  complex(8), dimension(N_freq,N_phi,4,N_bl) :: xi_nu
 
 
 end module xi_global

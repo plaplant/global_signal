@@ -90,7 +90,7 @@ contains
     integer(HID_T)  :: xi_id,attr_id,header_id
     integer(SIZE_T) :: hint,offset,c_size
     integer(HSIZE_T), dimension(1) :: adims
-    integer(HSIZE_T), dimension(2) :: ddims
+    integer(HSIZE_T), dimension(4) :: ddims
 
 
     ! Timing variables
@@ -153,15 +153,6 @@ contains
     call h5aclose_f(attr_id, error)
     call h5sclose_f(dset_id, error)
 
-    ! delay value
-    call h5screate_f(H5S_SCALAR_F, dset_id, error)
-    call h5acreate_f(header_id, "tau_h", H5T_NATIVE_DOUBLE, dset_id, &
-         attr_id, error)
-    call h5awrite_f(attr_id, H5T_NATIVE_DOUBLE, TAUH, adims, error)
-    call h5aclose_f(attr_id, error)
-    call h5sclose_f(dset_id, error)
-
-
     ! Write dataset
     hint = 0
     call h5gcreate_f(file_id, "/Data", xi_id, error, size_hint=hint)
@@ -184,8 +175,17 @@ contains
     call h5dclose_f(dset_id, error)
     call h5sclose_f(dspace_id, error)
 
+    ! Write out tauh values
+    adims = (/ N_bl /)
+    call h5screate_simple_f(1, adims, dspace_id, error)
+    call h5dcreate_f(xi_id, "tauh", H5T_NATIVE_DOUBLE, dspace_id, dset_id, &
+         error)
+    call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, tauh_vals, adims, error)
+    call h5dclose_f(dset_id, error)
+    call h5sclose_f(dspace_id, error)
+
     ! Make custom complex type
-    c_size = h5offsetof(c_loc(xi_nu(1,1)), c_loc(xi_nu(2,1)))
+    c_size = h5offsetof(c_loc(xi_nu(1,1,1,1)), c_loc(xi_nu(2,1,1,1)))
     offset = 0
     call h5tcreate_f(H5T_COMPOUND_F, c_size, dtype_id, error)
     call h5tinsert_f(dtype_id, "r", offset, H5T_NATIVE_DOUBLE, error)
@@ -193,8 +193,8 @@ contains
     call h5tinsert_f(dtype_id, "i", offset, H5T_NATIVE_DOUBLE, error)
 
     ! Write out the data
-    ddims = (/ N_freq, N_phi /)
-    call h5screate_simple_f(2, ddims, dspace_id, error)
+    ddims = (/ N_freq, N_phi, 4, N_bl /)
+    call h5screate_simple_f(4, ddims, dspace_id, error)
     call h5dcreate_f(xi_id, "xi", dtype_id, dspace_id, dset_id, error)
     f_ptr = c_loc(xi_nu)
     call h5dwrite_f(dset_id, dtype_id, f_ptr, error)
