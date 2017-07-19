@@ -144,7 +144,7 @@ contains
 
     tr2 = omp_get_wtime()
     call time(ts2)
-    write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called calc II map'
+    write(*,'(f8.2,2a10,a)') tr2-tr1,ts1,ts2,'  Called calc Mueller maps'
     return
 
 

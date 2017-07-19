@@ -25,7 +25,7 @@ module xi_global
 
 
   ! Computation
-  integer(4), parameter :: Ncpu = 8
+  integer(4), parameter :: Ncpu = 16
 
 
   ! HEALPix parameters
@@ -61,7 +61,7 @@ module xi_global
   ! File locations
   character(*), parameter :: infile = '/data4/paper/plaplant/beams/'&
        //'HERA_ijones.hdf5'
-  character(*), parameter :: outdir = 'Output/PAPER/'
+  character(*), parameter :: outdir = 'Output/HERA/'
 
 
 !------------------------------------------------------------------------------!
