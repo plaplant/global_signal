@@ -24,6 +24,8 @@ def convert_data(infile, outfile):
 
 
 if __name__ == '__main__':
-    infile = '/data4/paper/zionos/polskysim/IonRIME/jones_save/HERA_NicCST/ijonesband_100-200mhz_nfreq201_nside128.npy'
-    outfile = '/data4/paper/plaplant/beams/HERA_ijones.hdf5'
+    # infile = '/data4/paper/zionos/polskysim/IonRIME/jones_save/HERA_NicCST/ijonesband_100-200mhz_nfreq201_nside128.npy'
+    # outfile = '/data4/paper/plaplant/beams/HERA_ijones.hdf5'
+    infile = '/data4/paper/zionos/polskysim/IonRIME/jones_save/PAPER_HFSS/ijonesband_100-200mhz_nfreq201_nside128.npy'
+    outfile = '/data4/paper/plaplant/beams/PAPER_ijones.hdf5'
     convert_data(infile, outfile)

@@ -56,8 +56,9 @@ module xi_global
 
   ! File locations
   character(*), parameter :: infile = '/data4/paper/plaplant/beams/'&
-       //'HERA_ijones.hdf5'
-  character(*), parameter :: outdir = 'Output/'
+       !//'HERA_ijones.hdf5'
+       //'PAPER_ijones.hdf5'
+  character(*), parameter :: outdir = 'Output/PAPER/'
 
 
 !------------------------------------------------------------------------------!
