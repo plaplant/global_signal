@@ -74,6 +74,10 @@ module xi_global
   type(fgsl_error_handler_t) :: default_errh
 
 
+  ! IO
+  logical :: no_mueller
+
+
 !------------------------------------------------------------------------------!
 
 
