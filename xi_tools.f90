@@ -316,7 +316,7 @@ contains
 
 
     ! Local variables
-    integer(4) :: inu,il,im,iphi,itau,ibl,istokes
+    integer(4) :: inu,il,im,iphi,itau,istokes
     real(8)    :: arg,jl,nu,theta,phi,tauh
     complex(8) :: prefac,y,a,x
 
@@ -441,7 +441,7 @@ contains
 
 
     ! Local variables
-    integer(4) :: inu,il,im,iphi,itau,ibl,istokes
+    integer(4) :: inu,il,im,iphi,itau,istokes
     real(8)    :: arg,jl,nu,theta,phi,tauh
     complex(8) :: prefac,y,a,x
 

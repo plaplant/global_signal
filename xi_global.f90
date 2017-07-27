@@ -25,7 +25,7 @@ module xi_global
 
 
   ! Computation
-  integer(4), parameter :: Ncpu = 16
+  integer(4), parameter :: Ncpu = 8
 
 
   ! HEALPix parameters

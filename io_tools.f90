@@ -86,8 +86,8 @@ contains
     type(C_PTR)      :: f_ptr
     integer(4)       :: error
     integer(HID_T)   :: file_id,dset_id
-    integer(HID_T)   :: dspace_id,dtype_id
-    integer(HID_T)   :: map_id,header_id,attr_id
+    integer(HID_T)   :: dspace_id,map_id
+    integer(HID_T)   :: header_id,attr_id
     integer(SIZE_T)  :: hint
     integer(HSIZE_T) :: adims(1),ddims(4)
 
@@ -178,7 +178,6 @@ contains
     logical        :: io_error
     integer(4)     :: error,itemp
     integer(HID_T) :: file_id,dset_id
-    integer(HID_T) :: dspace_id,dtype_id
     integer(HID_T) :: attr_id
 
 
@@ -407,8 +406,7 @@ contains
     logical         :: io_error
     integer(4)      :: error,itemp
     integer(HID_T)  :: file_id,dset_id
-    integer(HID_T)  :: dspace_id,dtype_id
-    integer(HID_T)  :: attr_id
+    integer(HID_T)  :: dtype_id,attr_id
     integer(SIZE_T) :: o0,offset
 
 

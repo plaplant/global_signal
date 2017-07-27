@@ -6,7 +6,7 @@
 #$ -N global_signal
 #$ -o log
 #$ -l all
-#$ -pe omp 16
+#$ -pe omp 8
 #$ -m be
 #$ -M plaplant@sas.upenn.edu
 
@@ -21,5 +21,5 @@ export KMP_STACKSIZE=128m
 
 # Compile and run job
 make clean
-make
+make DEBUG=1
 ./calculate_xi.x
