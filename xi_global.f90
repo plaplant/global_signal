@@ -64,6 +64,10 @@ module xi_global
   character(*), parameter :: outdir = 'Output/HERA/'
 
 
+  ! V_xx vs V_I
+  logical, parameter :: make_stokes_vis = .false.
+
+
 !------------------------------------------------------------------------------!
 
 
@@ -75,7 +79,7 @@ module xi_global
 
 
   ! IO
-  logical :: no_mueller
+  logical :: no_maps
 
 
 !------------------------------------------------------------------------------!
@@ -87,6 +91,7 @@ module xi_global
   ! Input
   complex(8), dimension(:,:,:,:), allocatable :: all_maps
   real(8),    dimension(:,:,:,:), allocatable :: mueller_maps
+  complex(8), dimension(:,:,:),   allocatable :: vis_maps
 
 
   ! Output

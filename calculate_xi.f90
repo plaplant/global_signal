@@ -25,12 +25,21 @@ program main
   ! Do work
   call init_maps
   call read_data
-  call read_mueller_maps
-  if (no_mueller) then
-     call calc_mueller_maps(all_maps, mueller_maps)
-     call write_mueller_maps
+  if (make_stokes_vis) then
+     call read_mueller_maps
+     if (no_maps) then
+        call calc_mueller_maps(all_maps, mueller_maps)
+        call write_mueller_maps
+     endif
+     call compute_xi_mueller(mueller_maps, xi_nu)
+  else
+     call read_vis_maps
+     if (no_maps) then
+        call calc_vis_maps(all_maps, vis_maps)
+        call write_vis_maps
+     endif
+     call compute_xi_vis(vis_maps, xi_nu)
   endif
-  call compute_xi(mueller_maps, xi_nu)
   call write_xi
 
 
