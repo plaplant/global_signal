@@ -1,7 +1,7 @@
 #$ -S /bin/bash
 #$ -V
 #$ -cwd
-#$ -l h_vmem=16G
+#$ -l h_vmem=2G
 #$ -j y
 #$ -N global_signal
 #$ -o log
@@ -21,5 +21,5 @@ export KMP_STACKSIZE=128m
 
 # Compile and run job
 make clean
-make DEBUG=1
+make
 ./calculate_xi.x

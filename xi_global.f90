@@ -30,7 +30,7 @@ module xi_global
 
   ! HEALPix parameters
   integer(4), parameter :: N_side  = 128
-  integer(4), parameter :: LMAX    = 3*N_side - 1
+  integer(4), parameter :: LMAX    = 3*32 - 1
   integer(4), parameter :: N_pix   = 12*N_side**2
 
 
