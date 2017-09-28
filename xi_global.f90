@@ -25,7 +25,7 @@ module xi_global
 
 
   ! Computation
-  integer(4), parameter :: Ncpu = 8
+  integer(4), parameter :: Ncpu = 16
 
 
   ! HEALPix parameters
@@ -59,9 +59,10 @@ module xi_global
 
 
   ! File locations
-  character(*), parameter :: infile = '/data4/paper/plaplant/beams/'&
+  character(*), parameter :: infile = '/physics2/plaplant/hera/beams/'&
        //'HERA_ijones.hdf5'
-  character(*), parameter :: outdir = 'Output/HERA/'
+  character(*), parameter :: outdir = '/physics2/plaplant/hera/global_signal/'&
+       //'HERA/'
 
 
   ! V_xx vs V_I

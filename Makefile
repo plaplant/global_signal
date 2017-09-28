@@ -9,7 +9,7 @@ HEALPIX     = $(HOME)/local/Healpix_3.30
 HEALPIX_INC = -I$(HEALPIX)/includef90
 HEALPIX_LIB = -L$(HEALPIX)/libf90 -lhealpix
 
-CFITSIO     = $(HOME)/local/cfitsio-3.390
+CFITSIO     = $(HOME)/local/cfitsio-3.370
 CFITSIO_INC = -I$(CFITSIO)/include
 CFITSIO_LIB = -L$(CFITSIO)/lib -lcfitsio
 

@@ -1,0 +1,32 @@
+#!/bin/bash
+#PBS -N global_signal
+#PBS -q bigmem
+#PBS -l nodes=1:ppn=64
+#PBS -l walltime=24:00:00
+#PBS -o std.log
+#PBS -j oe
+#PBS -m be
+#PBS -M plaplant@sas.upenn.edu
+
+# Intel
+source /opt/intel/composer_xe_2013_sp1.0.080/bin/compilervars.sh intel64
+which ifort
+
+# Set environment variables
+export KMP_LIBRARY=turnaround
+export KMP_SCHEDULE=static,balanced
+export KMP_STACKSIZE=128m
+export PKG_CONFIG_PATH=/home/plaplant/local/fgsl-1.0.0/lib/pkgconfig:/home/plaplant/local/gsl-1.16/lib/pkgconfig:$PKG_CONFIG_PATH
+export LD_LIBRARY_PATH=/home/plaplant/local/fgsl-1.0.0/lib:/home/plaplant/local/gsl-1.16/lib:$LD_LIBRARY_PATH
+
+# disable file locking in HDF5 to play nicely with lustre
+export HDF5_USE_FILE_LOCKING=FALSE
+
+# Go to the job directory
+export SRC=$PBS_O_WORKDIR
+cd $SRC
+
+# Compile and run job
+make clean
+make
+./calculate_xi.x > log
